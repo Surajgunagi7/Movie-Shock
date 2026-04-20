@@ -83,7 +83,19 @@ export default function Home() {
     fetch('/api/movies')
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setCollection(data);
+        if (Array.isArray(data)) {
+          const uniqueData = [];
+          data.forEach(item => {
+            if (!uniqueData.find(e => String(e.id) === String(item.id) && e.type === item.type)) {
+              uniqueData.push(item);
+            }
+          });
+          setCollection(uniqueData);
+          // Passively clean up the actual database if corruption was found
+          if (data.length !== uniqueData.length) {
+            fetch('/api/movies', { method: 'POST', body: JSON.stringify(uniqueData) });
+          }
+        }
       })
       .catch(err => console.error(err));
   }, []);
@@ -196,7 +208,8 @@ export default function Home() {
     const newCollection = [...collection];
     
     selected.forEach(s => {
-      const exists = newCollection.find(e => String(e.id) === String(s.id) && e.type === s.type && e.franchise === franchise);
+      // Check if it exists ANYWHERE in the collection, ignoring franchise boundary
+      const exists = newCollection.find(e => String(e.id) === String(s.id) && e.type === s.type);
       if (!exists) {
         newCollection.push({
           id: String(s.id),
