@@ -292,6 +292,19 @@ export default function Home() {
       <div className="app-orb-1" />
       <div className="app-orb-2" />
 
+      {/* ── MOBILE TOP BAR ── */}
+      <div className="mobile-topbar">
+        <button className="mobile-topbar-action" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+        </button>
+        <span className="mobile-topbar-logo">MovieShock</span>
+        <button className="mobile-theme-btn" onClick={cycleTheme}>
+          <span className="material-symbols-outlined">{themeIcon}</span>
+        </button>
+      </div>
+
       {/* ── SIDEBAR NAV ── */}
       <nav className="sidebar">
         {/* Logo */}
@@ -336,6 +349,32 @@ export default function Home() {
             <span className="theme-toggle-label">{themeLabel}</span>
           </button>
         </div>
+      </nav>
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <nav className="mobile-bottomnav">
+        <button
+          className={`mobile-nav-btn ${view === 'search' ? 'active' : ''}`}
+          onClick={() => setView('search')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          {view === 'search' && <span className="mobile-nav-btn-label">Discover</span>}
+        </button>
+
+        <button
+          className={`mobile-nav-btn ${view === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setView('dashboard')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+             <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+             <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+             <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+             <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+          </svg>
+          {view === 'dashboard' && <span className="mobile-nav-btn-label">Collection</span>}
+        </button>
       </nav>
 
       {/* ── MAIN CONTENT ── */}
