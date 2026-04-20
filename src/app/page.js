@@ -168,7 +168,7 @@ export default function Home() {
   };
 
   const toggleSelect = (item) => {
-    const idx = selected.findIndex(s => s.id === item.id);
+    const idx = selected.findIndex(s => String(s.id) === String(item.id));
     if (idx === -1) {
       const isMovie = mediaType === 'movie';
       setSelected([...selected, {
