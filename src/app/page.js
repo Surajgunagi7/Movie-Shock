@@ -1,12 +1,43 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './globals.css';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMG_BASE = 'https://image.tmdb.org/t/p/w342';
 const IMG_ORIG = 'https://image.tmdb.org/t/p/w500';
 const STORAGE_API_KEY = 'movieshock_apikey';
+
+// Animation variants
+const pageVar = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0, 0, 1] } },
+  exit: { opacity: 0, scale: 0.98, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
+};
+
+const staggerVar = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.05 } }
+};
+
+const cardVar = {
+  initial: { opacity: 0, scale: 0.9, y: 10 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0, 0, 1] } },
+  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
+};
+
+const modalVar = {
+  initial: { opacity: 0, scale: 0.95 },
+  animate: { opacity: 1, scale: 1, transition: { type: 'spring', damping: 25, stiffness: 300 } },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
+};
+
+const panelVar = {
+  initial: { x: '100%' },
+  animate: { x: 0, transition: { type: 'spring', damping: 25, stiffness: 200 } },
+  exit: { x: '100%', transition: { type: 'tween', ease: 'easeInOut', duration: 0.2 } }
+};
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -226,10 +257,10 @@ export default function Home() {
 
   return (
     <>
-      <nav className="topnav">
+      <nav className="topnav tracking-tight">
         <div className="nav-logo">
           <span className="logo-icon">🎬</span>
-          <span className="logo-text">Movie<span className="logo-accent">Shock</span></span>
+          <span className="logo-text">MovieShock</span>
         </div>
         <div className="nav-tabs">
           <button className={`nav-tab ${view === 'search' ? 'active' : ''}`} onClick={() => setView('search')}>
@@ -241,256 +272,291 @@ export default function Home() {
             My Collection
           </button>
         </div>
-        <div className="nav-actions">
-           {/* Export/Import omitted or simplified since backend handles DB */}
-        </div>
       </nav>
 
-      {/* SEARCH VIEW */}
-      {view === 'search' && (
-        <main className="view active">
-          <div className="hero-section">
-            <h1 className="hero-title">Discover & Track</h1>
-            <p className="hero-sub">Search movies and web series, add them to your franchise collection</p>
-            <div className="type-toggle">
-              <button className={`type-btn ${mediaType === 'movie' ? 'active' : ''}`} onClick={() => { setMediaType('movie'); if (searchQuery) handleSearch(searchQuery); }}>🎬 Movies</button>
-              <button className={`type-btn ${mediaType === 'tv' ? 'active' : ''}`} onClick={() => { setMediaType('tv'); if (searchQuery) handleSearch(searchQuery); }}>📺 Web Series</button>
-            </div>
-            <div className="search-wrapper">
-              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search for a movie, series or franchise..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-              <div className={`search-spinner ${isSearching ? 'visible' : ''}`} />
-              {searchQuery && <button className="search-clear" style={{ display: 'flex' }} onClick={clearSearch}>✕</button>}
-            </div>
-          </div>
-
-          {hasSearched && (
-            <section className="results-section" style={{ display: 'block' }}>
-              <div className="results-header">
-                <h2 className="results-title">{results.length} {mediaType === 'tv' ? 'Series' : 'Movies'} found</h2>
-                {selected.length > 0 && (
-                  <div className="selected-bar" style={{ display: 'flex' }}>
-                    <span>{selected.length} selected</span>
-                    <button className="btn-primary" onClick={() => setIsAddModalOpen(true)}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      Add to Collection
-                    </button>
-                  </div>
-                )}
+      <AnimatePresence mode="wait">
+        {view === 'search' && (
+          <motion.main key="search" className="view" variants={pageVar} initial="initial" animate="animate" exit="exit">
+            <div className="hero-section">
+              <h1 className="hero-title">Discover & Track</h1>
+              <p className="hero-sub">Search movies and web series, add them to your franchise collection</p>
+              <div className="type-toggle">
+                <button className={`type-btn ${mediaType === 'movie' ? 'active' : ''}`} onClick={() => { setMediaType('movie'); if (searchQuery) handleSearch(searchQuery); }}>🎬 Movies</button>
+                <button className={`type-btn ${mediaType === 'tv' ? 'active' : ''}`} onClick={() => { setMediaType('tv'); if (searchQuery) handleSearch(searchQuery); }}>📺 Web Series</button>
               </div>
-              
-              <div className="results-grid">
-                {results.length === 0 ? (
-                  <div className="no-results" style={{ display: 'block' }}>
-                    <span>🎬</span><p>No results found. Try a different title.</p>
-                  </div>
-                ) : (
-                  results.map((item, i) => {
-                    const isMovie = mediaType === 'movie';
-                    const title = isMovie ? item.title : item.name;
-                    const year = (isMovie ? item.release_date : item.first_air_date || '').slice(0, 4);
-                    const poster = item.poster_path ? `${IMG_BASE}${item.poster_path}` : null;
-                    const alreadyIn = collection.find(e => String(e.id) === String(item.id) && e.type === mediaType);
-                    const isSelected = selected.find(s => String(s.id) === String(item.id));
-
-                    return (
-                      <div 
-                        key={item.id} 
-                        className={`media-card ${isSelected ? 'selected' : ''}`} 
-                        style={{ animationDelay: `${i * 30}ms` }}
-                        onClick={() => toggleSelect(item)}
-                        onDoubleClick={() => setSidePanelItem({ title, year, poster: poster ? `${IMG_ORIG}${item.poster_path}` : null, overview: item.overview, type: mediaType, franchises: collection.filter(e => String(e.id) === String(item.id)).map(e => e.franchise)})}
-                      >
-                        {alreadyIn && <div className="already-added-badge">✓ In {alreadyIn.franchise}</div>}
-                        {poster ? (
-                          <img src={poster} alt={title} loading="lazy" />
-                        ) : (
-                          <div className="no-poster"><span>{isMovie ? '🎬' : '📺'}</span>No Poster</div>
-                        )}
-                        <div className="card-info">
-                          <div className="card-title">{title}</div>
-                          <div className="card-meta">
-                            <span className={`card-badge ${isMovie ? '' : 'tv'}`}>{isMovie ? 'Movie' : 'Series'}</span>
-                            {year && <span>{year}</span>}
-                          </div>
-                        </div>
-                        <div className="select-check">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
-          )}
-        </main>
-      )}
-
-      {/* DASHBOARD VIEW */}
-      {view === 'dashboard' && (
-        <main className="view active">
-          <div className="dashboard-header">
-            <div className="dash-title-row">
-              <h1 className="dash-title">My Collection</h1>
-              <span className="dash-stat">{collection.length} titles</span>
-            </div>
-            <div className="search-wrapper dash-search">
-              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Quick filter by title or franchise..."
-                value={dashFilter}
-                onChange={(e) => setDashFilter(e.target.value)}
-              />
-            </div>
-            <div className="filter-row">
-              <button className={`pill ${dashTypeFilter === 'all' ? 'active' : ''}`} onClick={() => setDashTypeFilter('all')}>All</button>
-              <button className={`pill ${dashTypeFilter === 'movie' ? 'active' : ''}`} onClick={() => setDashTypeFilter('movie')}>🎬 Movies</button>
-              <button className={`pill ${dashTypeFilter === 'tv' ? 'active' : ''}`} onClick={() => setDashTypeFilter('tv')}>📺 Series</button>
-            </div>
-          </div>
-
-          {collection.length === 0 ? (
-            <div className="empty-state" style={{ display: 'block' }}>
-              <div className="empty-icon">🎞️</div>
-              <h3>Your collection is empty</h3>
-              <p>Search for a movie or series and add it here.</p>
-              <button className="btn-primary" onClick={() => setView('search')}>Start Discovering</button>
-            </div>
-          ) : (
-            <div className="collections-container">
-              {sortedDash.map(([franchise, items], gi) => (
-                <div key={franchise} className="franchise-group" style={{ animationDelay: `${gi * 60}ms` }}>
-                  <div className="franchise-header">
-                    <div className="franchise-name-wrap">
-                      <span className="franchise-name">{franchise}</span>
-                      <span className="franchise-count">{items.length}</span>
-                    </div>
-                    <div className="franchise-actions">
-                      <button onClick={() => deleteFranchise(franchise)}>Delete collection</button>
-                    </div>
-                  </div>
-                  <div className="franchise-scroll">
-                    {items.map((item, i) => {
-                      const poster = item.poster_path ? `${IMG_BASE}${item.poster_path}` : null;
-                      return (
-                        <div key={`${item.id}-${item.franchise}`} className="collection-card" style={{ animationDelay: `${(gi * 60) + (i * 20)}ms` }} onClick={() => setSidePanelItem({...item, poster: item.poster_path ? `${IMG_ORIG}${item.poster_path}` : null, franchises: collection.filter(e => String(e.id) === String(item.id)).map(e => e.franchise) })}>
-                          {poster ? <img src={poster} alt={item.title} loading="lazy" /> : <div className="no-poster"><span>{item.type === 'tv' ? '📺' : '🎬'}</span>{item.title.slice(0, 20)}</div>}
-                          <div className="collection-card-info">
-                            <div className="collection-card-title">{item.title}</div>
-                            <div className="collection-card-meta">
-                              <span>{item.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
-                              {item.year && <span>· {item.year}</span>}
-                            </div>
-                          </div>
-                          <button className="remove-from-col" title="Remove" onClick={(e) => removeEntry(item.id, item.franchise, item.type, e)}>✕</button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </main>
-      )}
-
-      {/* MODALS & PANELS */}
-      {isAddModalOpen && (
-        <div className="modal-overlay open" onClick={(e) => { if(e.target.classList.contains('modal-overlay')) setIsAddModalOpen(false) }}>
-          <div className="modal glass-card">
-            <div className="modal-header">
-              <h3 className="modal-title">Add to Collection</h3>
-              <button className="modal-close" onClick={() => setIsAddModalOpen(false)}>✕</button>
-            </div>
-            <div className="modal-selected-preview">
-              {selected.map(s => (
-                <div key={s.id} className="preview-chip">
-                  {s.poster ? <img src={`${IMG_BASE}${s.poster}`} alt={s.title} /> : <div style={{width:'24px', height:'24px', background:'var(--bg-subtle)', borderRadius:'4px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px'}}>{s.type === 'tv' ? '📺' : '🎬'}</div>}
-                  <span>{s.title}</span>
-                </div>
-              ))}
-            </div>
-            <div className="modal-body">
-              <label className="form-label">Choose or create a franchise / collection</label>
-              <div className="franchise-list">
-                {getUniqueFranchises().length === 0 ? (
-                  <p style={{fontSize:'13px', color:'var(--text-muted)', padding:'4px 0'}}>No collections yet — create your first one below!</p>
-                ) : (
-                  getUniqueFranchises().map(f => {
-                    const count = collection.filter(e => e.franchise === f).length;
-                    return (
-                      <button key={f} className={`franchise-option ${selectedFranchise === f ? 'selected' : ''}`} onClick={() => { setSelectedFranchise(f); setNewFranchiseName(''); }}>
-                        <span className="fo-icon">📁</span>
-                        <span>{f}</span>
-                        <span className="fo-count">{count} title{count !== 1 ? 's' : ''}</span>
-                      </button>
-                    )
-                  })
-                )}
-              </div>
-              <div className="new-franchise-wrap">
+              <div className="search-wrapper">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input
                   type="text"
-                  className="franchise-input"
-                  placeholder="+ Create new collection..."
-                  value={newFranchiseName}
-                  onChange={(e) => { setNewFranchiseName(e.target.value); setSelectedFranchise(''); }}
+                  className="search-input"
+                  placeholder="Search for a movie, series or franchise..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+                <div className={`search-spinner ${isSearching ? 'visible' : ''}`} />
+                {searchQuery && <button className="search-clear" style={{ display: 'flex' }} onClick={clearSearch}>✕</button>}
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {hasSearched && (
+                <motion.section 
+                  className="results-section"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <div className="results-header">
+                    <h2 className="results-title">{results.length} {mediaType === 'tv' ? 'Series' : 'Movies'} found</h2>
+                    <AnimatePresence>
+                      {selected.length > 0 && (
+                        <motion.div 
+                          className="selected-bar"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                        >
+                          <span>{selected.length} selected</span>
+                          <button className="btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add to Collection
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  
+                  <motion.div className="results-grid" variants={staggerVar} initial="initial" animate="animate">
+                    {results.length === 0 ? (
+                      <div className="no-results">
+                        <span>🎬</span><p>No results found. Try a different title.</p>
+                      </div>
+                    ) : (
+                      <AnimatePresence>
+                        {results.map((item) => {
+                          const isMovie = mediaType === 'movie';
+                          const title = isMovie ? item.title : item.name;
+                          const year = (isMovie ? item.release_date : item.first_air_date || '').slice(0, 4);
+                          const poster = item.poster_path ? `${IMG_BASE}${item.poster_path}` : null;
+                          const alreadyIn = collection.find(e => String(e.id) === String(item.id) && e.type === mediaType);
+                          const isSelected = selected.find(s => String(s.id) === String(item.id));
+
+                          return (
+                            <motion.div 
+                              layout
+                              key={item.id} 
+                              className={`media-card md-card ${isSelected ? 'selected' : ''}`} 
+                              variants={cardVar}
+                              initial="initial"
+                              animate="animate"
+                              exit="exit"
+                              onClick={() => toggleSelect(item)}
+                            >
+                              {alreadyIn && <div className="already-added-badge">✓ In {alreadyIn.franchise}</div>}
+                              {poster ? (
+                                <img src={poster} alt={title} loading="lazy" />
+                              ) : (
+                                <div className="no-poster"><span>{isMovie ? '🎬' : '📺'}</span>No Poster</div>
+                              )}
+                              <div className="card-info">
+                                <div className="card-title">{title}</div>
+                                <div className="card-meta">
+                                  <span>{isMovie ? 'Movie' : 'Series'}</span>
+                                  {year && <span>{year}</span>}
+                                </div>
+                              </div>
+                              <div className="select-check">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    )}
+                  </motion.div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </motion.main>
+        )}
+
+        {view === 'dashboard' && (
+          <motion.main key="dashboard" className="view" variants={pageVar} initial="initial" animate="animate" exit="exit">
+            <div className="dashboard-header">
+              <div className="dash-title-row">
+                <h1 className="dash-title">My Collection</h1>
+                <span className="dash-stat">{collection.length} titles</span>
+              </div>
+              <div className="search-wrapper dash-search">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Quick filter by title or franchise..."
+                  value={dashFilter}
+                  onChange={(e) => setDashFilter(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
-              <button className="btn-primary" disabled={(!selectedFranchise && !newFranchiseName.trim())} onClick={confirmAdd}>Add to Collection</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {sidePanelItem && (
-        <div className="side-panel-overlay open" onClick={(e) => { if(e.target.classList.contains('side-panel-overlay')) setSidePanelItem(null) }}>
-          <div className="side-panel glass-card">
-            <button className="panel-close" onClick={() => setSidePanelItem(null)}>✕</button>
-            <div id="side-panel-content">
-              {sidePanelItem.poster && <img className="panel-poster" src={sidePanelItem.poster} alt={sidePanelItem.title} />}
-              <div className="panel-title">{sidePanelItem.title}</div>
-              <div className="panel-meta">
-                <span className="panel-tag">{sidePanelItem.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
-                {sidePanelItem.year && <span>· {sidePanelItem.year}</span>}
-                {sidePanelItem.added_date && <span>· Added {sidePanelItem.added_date}</span>}
+              <div className="filter-row">
+                <button className={`pill ${dashTypeFilter === 'all' ? 'active' : ''}`} onClick={() => setDashTypeFilter('all')}>All</button>
+                <button className={`pill ${dashTypeFilter === 'movie' ? 'active' : ''}`} onClick={() => setDashTypeFilter('movie')}>🎬 Movies</button>
+                <button className={`pill ${dashTypeFilter === 'tv' ? 'active' : ''}`} onClick={() => setDashTypeFilter('tv')}>📺 Series</button>
               </div>
-              <p className="panel-overview">{sidePanelItem.overview || 'No description available.'}</p>
-              {sidePanelItem.franchises && sidePanelItem.franchises.length > 0 && (
-                <div className="panel-franchise">In collection: {sidePanelItem.franchises.map(f => <strong key={f}>{f} </strong>)}</div>
-              )}
             </div>
-          </div>
-        </div>
-      )}
 
-      {showApiBanner && (
-        <div className="api-setup-banner" style={{ display: 'block' }}>
-          <div className="api-setup-inner">
-            <span className="api-icon">🔑</span>
-            <div>
-              <strong>Set up your free TMDB API key to enable search</strong>
-              <p>Get a free key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a> — it's instant and free.</p>
-            </div>
-            <div className="api-key-form">
-              <input type="text" placeholder="Paste your API key here..." value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} />
-              <button onClick={saveAPIKey}>Save</button>
+            <AnimatePresence mode="popLayout">
+              {collection.length === 0 ? (
+                <motion.div key="empty" className="empty-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <div className="empty-icon">🎞️</div>
+                  <h3>Your collection is empty</h3>
+                  <p>Search for a movie or series and add it here.</p>
+                  <button className="btn-primary" onClick={() => setView('search')}>Start Discovering</button>
+                </motion.div>
+              ) : (
+                <motion.div key="grid" className="collections-container" variants={staggerVar} initial="initial" animate="animate">
+                  <AnimatePresence>
+                    {sortedDash.map(([franchise, items]) => (
+                      <motion.div layout key={franchise} className="franchise-group" variants={cardVar} initial="initial" animate="animate" exit="exit">
+                        <div className="franchise-header">
+                          <div className="franchise-name-wrap">
+                            <span className="franchise-name">{franchise}</span>
+                            <span className="franchise-count">{items.length}</span>
+                          </div>
+                          <div className="franchise-actions">
+                            <button onClick={() => deleteFranchise(franchise)}>Delete container</button>
+                          </div>
+                        </div>
+                        <motion.div className="franchise-scroll" layout>
+                          <AnimatePresence>
+                            {items.map((item) => {
+                              const poster = item.poster_path ? `${IMG_BASE}${item.poster_path}` : null;
+                              return (
+                                <motion.div 
+                                  layout
+                                  key={`${item.id}-${item.franchise}`} 
+                                  className="collection-card md-card" 
+                                  variants={cardVar}
+                                  initial="initial"
+                                  animate="animate"
+                                  exit="exit"
+                                  onClick={() => setSidePanelItem({...item, poster: item.poster_path ? `${IMG_ORIG}${item.poster_path}` : null, franchises: collection.filter(e => String(e.id) === String(item.id)).map(e => e.franchise) })}
+                                >
+                                  {poster ? <img src={poster} alt={item.title} loading="lazy" /> : <div className="no-poster"><span>{item.type === 'tv' ? '📺' : '🎬'}</span>{item.title.slice(0, 20)}</div>}
+                                  <div className="collection-card-info">
+                                    <div className="collection-card-title">{item.title}</div>
+                                    <div className="collection-card-meta">
+                                      <span>{item.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
+                                      {item.year && <span>· {item.year}</span>}
+                                    </div>
+                                  </div>
+                                  <button className="remove-from-col" title="Remove" onClick={(e) => removeEntry(item.id, item.franchise, item.type, e)}>✕</button>
+                                </motion.div>
+                              )
+                            })}
+                          </AnimatePresence>
+                        </motion.div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.main>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="modal-overlay open" onClick={(e) => { if(e.target.classList.contains('modal-overlay')) setIsAddModalOpen(false) }}>
+            <motion.div className="modal md-card" variants={modalVar} initial="initial" animate="animate" exit="exit" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3 className="modal-title">Add to Collection</h3>
+                <button className="modal-close" onClick={() => setIsAddModalOpen(false)}>✕</button>
+              </div>
+              <div className="modal-selected-preview">
+                {selected.map(s => (
+                  <div key={s.id} className="preview-chip">
+                    {s.poster ? <img src={`${IMG_BASE}${s.poster}`} alt={s.title} /> : <div style={{width:'24px', height:'24px', background:'var(--md-sys-color-surface)', borderRadius:'4px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px'}}>{s.type === 'tv' ? '📺' : '🎬'}</div>}
+                    <span>{s.title}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="modal-body">
+                <label className="form-label">Choose or create a franchise</label>
+                <div className="franchise-list">
+                  {getUniqueFranchises().length === 0 ? (
+                    <p style={{fontSize:'13px', color:'var(--md-sys-color-outline)', padding:'4px 0'}}>No collections yet — create your first one below!</p>
+                  ) : (
+                    getUniqueFranchises().map(f => {
+                      const count = collection.filter(e => e.franchise === f).length;
+                      return (
+                        <button key={f} className={`franchise-option ${selectedFranchise === f ? 'selected' : ''}`} onClick={() => { setSelectedFranchise(f); setNewFranchiseName(''); }}>
+                          <span style={{flex: 1}}>{f}</span>
+                          <span style={{fontSize:'12px', opacity: 0.8}}>{count} title{count !== 1 ? 's' : ''}</span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+                <div className="new-franchise-wrap">
+                  <input
+                    type="text"
+                    className="franchise-input"
+                    placeholder="+ Create new container..."
+                    value={newFranchiseName}
+                    onChange={(e) => { setNewFranchiseName(e.target.value); setSelectedFranchise(''); }}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                <button className="btn-primary" disabled={(!selectedFranchise && !newFranchiseName.trim())} onClick={confirmAdd}>Add to Collection</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {sidePanelItem && (
+          <div className="side-panel-overlay open" onClick={(e) => { if(e.target.classList.contains('side-panel-overlay')) setSidePanelItem(null) }}>
+            <motion.div className="side-panel" variants={panelVar} initial="initial" animate="animate" exit="exit" onClick={e => e.stopPropagation()}>
+              <button className="panel-close" onClick={() => setSidePanelItem(null)}>✕</button>
+              <div id="side-panel-content">
+                {sidePanelItem.poster && <img className="panel-poster" src={sidePanelItem.poster} alt={sidePanelItem.title} />}
+                <div className="panel-title">{sidePanelItem.title}</div>
+                <div className="panel-meta">
+                  <span className="panel-tag">{sidePanelItem.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
+                  {sidePanelItem.year && <span>· {sidePanelItem.year}</span>}
+                  {sidePanelItem.added_date && <span>· Added {sidePanelItem.added_date}</span>}
+                </div>
+                <p className="panel-overview">{sidePanelItem.overview || 'No description available.'}</p>
+                {sidePanelItem.franchises && sidePanelItem.franchises.length > 0 && (
+                  <div className="panel-franchise">In collection: {sidePanelItem.franchises.map(f => <strong key={f}>{f} </strong>)}</div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showApiBanner && (
+          <div className="api-setup-banner" style={{ display: 'block' }}>
+            <div className="api-setup-inner">
+              <span className="api-icon">🔑</span>
+              <div>
+                <strong>Set up your free TMDB API key to enable search</strong>
+                <p>Get a free key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a> — it's instant and free.</p>
+              </div>
+              <div className="api-key-form">
+                <input type="text" placeholder="Paste your API key here..." value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} />
+                <button onClick={saveAPIKey}>Save</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       <div className={`toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
     </>
