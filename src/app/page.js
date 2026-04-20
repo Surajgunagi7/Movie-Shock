@@ -39,9 +39,10 @@ export default function Home() {
 
   // Load from DB & API Key
   useEffect(() => {
+    const envKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
     const key = localStorage.getItem(STORAGE_API_KEY);
-    if (key) {
-      setApiKey(key);
+    if (envKey || key) {
+      setApiKey(envKey || key);
     } else {
       setShowApiBanner(true);
     }
