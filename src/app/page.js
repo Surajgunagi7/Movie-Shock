@@ -29,12 +29,6 @@ const cardVar = {
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
 
-const modalVar = {
-  initial: { opacity: 0, y: 50 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: md3Ease } },
-  exit: { opacity: 0, y: 50, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
-};
-
 const panelVar = {
   initial: { x: '100%', opacity: 0 },
   animate: { x: 0, opacity: 1, transition: { duration: 0.4, ease: md3Ease } },
@@ -69,6 +63,20 @@ export default function Home() {
   const [toastMsg, setToastMsg] = useState('');
   
   const searchTimeoutRef = useRef(null);
+
+  // Load Material Web Components
+  useEffect(() => {
+    import('@material/web/button/filled-button.js');
+    import('@material/web/button/text-button.js');
+    import('@material/web/button/outlined-button.js');
+    import('@material/web/textfield/outlined-text-field.js');
+    import('@material/web/tabs/tabs.js');
+    import('@material/web/tabs/primary-tab.js');
+    import('@material/web/progress/circular-progress.js');
+    import('@material/web/dialog/dialog.js');
+    import('@material/web/icon/icon.js');
+    import('@material/web/iconbutton/icon-button.js');
+  }, []);
 
   // Load from DB & API Key
   useEffect(() => {
@@ -260,19 +268,18 @@ export default function Home() {
   return (
     <>
       <nav className="topnav tracking-tight">
-        <div className="nav-logo">
-          <span className="logo-icon">🎬</span>
-          <span className="logo-text">MovieShock</span>
+        <div className="nav-logo" style={{ fontSize: '18px', fontWeight: 500, letterSpacing: '0.2px' }}>
+          <span>🎬 MovieShock</span>
         </div>
-        <div className="nav-tabs">
-          <button className={`nav-tab ${view === 'search' ? 'active' : ''}`} onClick={() => setView('search')}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Discover
-          </button>
-          <button className={`nav-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-            My Collection
-          </button>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <md-tabs active-tab-index={view === 'search' ? 0 : 1} style={{ background: 'transparent' }}>
+            <md-primary-tab onClick={() => setView('search')}>
+              Discover
+            </md-primary-tab>
+            <md-primary-tab onClick={() => setView('dashboard')}>
+             My Collection
+            </md-primary-tab>
+          </md-tabs>
         </div>
       </nav>
 
@@ -282,21 +289,35 @@ export default function Home() {
             <div className="hero-section">
               <h1 className="hero-title">Discover & Track</h1>
               <p className="hero-sub">Search movies and web series, add them to your franchise collection</p>
-              <div className="type-toggle">
-                <button className={`type-btn ${mediaType === 'movie' ? 'active' : ''}`} onClick={() => { setMediaType('movie'); if (searchQuery) handleSearch(searchQuery); }}>🎬 Movies</button>
-                <button className={`type-btn ${mediaType === 'tv' ? 'active' : ''}`} onClick={() => { setMediaType('tv'); if (searchQuery) handleSearch(searchQuery); }}>📺 Web Series</button>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '24px' }}>
+                {mediaType === 'movie' ? (
+                  <md-filled-button onClick={() => { setMediaType('movie'); if (searchQuery) handleSearch(searchQuery); }}>🎬 Movies</md-filled-button>
+                ) : (
+                  <md-outlined-button onClick={() => { setMediaType('movie'); if (searchQuery) handleSearch(searchQuery); }}>🎬 Movies</md-outlined-button>
+                )}
+                {mediaType === 'tv' ? (
+                  <md-filled-button onClick={() => { setMediaType('tv'); if (searchQuery) handleSearch(searchQuery); }}>📺 Web Series</md-filled-button>
+                ) : (
+                  <md-outlined-button onClick={() => { setMediaType('tv'); if (searchQuery) handleSearch(searchQuery); }}>📺 Web Series</md-outlined-button>
+                )}
               </div>
               <div className="search-wrapper">
-                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Search for a movie, series or franchise..."
+                <md-outlined-text-field
+                  label="Search for a movie, series or franchise..."
                   value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
-                <div className={`search-spinner ${isSearching ? 'visible' : ''}`} />
-                {searchQuery && <button className="search-clear" style={{ display: 'flex' }} onClick={clearSearch}>✕</button>}
+                  onInput={(e) => handleSearch(e.target.value)}
+                  style={{ width: '100%', '--md-outlined-text-field-container-shape': '28px' }}
+                >
+                  <md-icon slot="leading-icon">search</md-icon>
+                  {searchQuery && (
+                    <md-icon-button slot="trailing-icon" onClick={clearSearch}>
+                      <md-icon>clear</md-icon>
+                    </md-icon-button>
+                  )}
+                </md-outlined-text-field>
+                {isSearching && (
+                  <md-circular-progress indeterminate style={{ position: 'absolute', right: '56px', top: '16px', '--md-circular-progress-size': '24px' }}></md-circular-progress>
+                )}
               </div>
             </div>
 
@@ -319,10 +340,9 @@ export default function Home() {
                           exit={{ opacity: 0, x: 20 }}
                         >
                           <span>{selected.length} selected</span>
-                          <button className="btn-primary" onClick={() => setIsAddModalOpen(true)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          <md-filled-button onClick={() => setIsAddModalOpen(true)}>
                             Add to Collection
-                          </button>
+                          </md-filled-button>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -390,19 +410,34 @@ export default function Home() {
                 <span className="dash-stat">{collection.length} titles</span>
               </div>
               <div className="search-wrapper dash-search">
-                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Quick filter by title or franchise..."
+                <md-outlined-text-field
+                  label="Quick filter by title or franchise..."
                   value={dashFilter}
-                  onChange={(e) => setDashFilter(e.target.value)}
-                />
+                  onInput={(e) => setDashFilter(e.target.value)}
+                  style={{ width: '100%', '--md-outlined-text-field-container-shape': '28px' }}
+                >
+                  <md-icon slot="leading-icon">search</md-icon>
+                </md-outlined-text-field>
               </div>
-              <div className="filter-row">
-                <button className={`pill ${dashTypeFilter === 'all' ? 'active' : ''}`} onClick={() => setDashTypeFilter('all')}>All</button>
-                <button className={`pill ${dashTypeFilter === 'movie' ? 'active' : ''}`} onClick={() => setDashTypeFilter('movie')}>🎬 Movies</button>
-                <button className={`pill ${dashTypeFilter === 'tv' ? 'active' : ''}`} onClick={() => setDashTypeFilter('tv')}>📺 Series</button>
+              <div className="filter-row" style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                <md-outlined-button 
+                  onClick={() => setDashTypeFilter('all')} 
+                  style={dashTypeFilter === 'all' ? { '--md-outlined-button-container-color': 'var(--md-sys-color-secondary-container)' } : {}}
+                >
+                  All
+                </md-outlined-button>
+                <md-outlined-button 
+                  onClick={() => setDashTypeFilter('movie')}
+                  style={dashTypeFilter === 'movie' ? { '--md-outlined-button-container-color': 'var(--md-sys-color-secondary-container)' } : {}}
+                >
+                  🎬 Movies
+                </md-outlined-button>
+                <md-outlined-button 
+                  onClick={() => setDashTypeFilter('tv')}
+                  style={dashTypeFilter === 'tv' ? { '--md-outlined-button-container-color': 'var(--md-sys-color-secondary-container)' } : {}}
+                >
+                  📺 Series
+                </md-outlined-button>
               </div>
             </div>
 
@@ -412,7 +447,7 @@ export default function Home() {
                   <div className="empty-icon">🎞️</div>
                   <h3>Your collection is empty</h3>
                   <p>Search for a movie or series and add it here.</p>
-                  <button className="btn-primary" onClick={() => setView('search')}>Start Discovering</button>
+                  <md-filled-button onClick={() => setView('search')}>Start Discovering</md-filled-button>
                 </motion.div>
               ) : (
                 <motion.div key="grid" className="collections-container" variants={staggerVar} initial="initial" animate="animate">
@@ -425,7 +460,9 @@ export default function Home() {
                             <span className="franchise-count">{items.length}</span>
                           </div>
                           <div className="franchise-actions">
-                            <button onClick={() => deleteFranchise(franchise)}>Delete container</button>
+                            <md-text-button style={{ '--md-sys-color-primary': 'var(--md-sys-color-error)' }} onClick={() => deleteFranchise(franchise)}>
+                              Delete container
+                            </md-text-button>
                           </div>
                         </div>
                         <motion.div className="franchise-scroll" layout>
@@ -451,7 +488,9 @@ export default function Home() {
                                       {item.year && <span>· {item.year}</span>}
                                     </div>
                                   </div>
-                                  <button className="remove-from-col" title="Remove" onClick={(e) => removeEntry(item.id, item.franchise, item.type, e)}>✕</button>
+                                  <md-icon-button className="remove-from-col" title="Remove" onClick={(e) => removeEntry(item.id, item.franchise, item.type, e)}>
+                                    <md-icon>close</md-icon>
+                                  </md-icon-button>
                                 </motion.div>
                               )
                             })}
@@ -470,51 +509,53 @@ export default function Home() {
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="modal-overlay open" onClick={(e) => { if(e.target.classList.contains('modal-overlay')) setIsAddModalOpen(false) }}>
-            <motion.div className="modal md-card" variants={modalVar} initial="initial" animate="animate" exit="exit" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3 className="modal-title">Add to Collection</h3>
-                <button className="modal-close" onClick={() => setIsAddModalOpen(false)}>✕</button>
-              </div>
-              <div className="modal-selected-preview">
-                {selected.map(s => (
-                  <div key={s.id} className="preview-chip">
-                    {s.poster ? <img src={`${IMG_BASE}${s.poster}`} alt={s.title} /> : <div style={{width:'24px', height:'24px', background:'var(--md-sys-color-surface)', borderRadius:'4px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px'}}>{s.type === 'tv' ? '📺' : '🎬'}</div>}
-                    <span>{s.title}</span>
+            <md-dialog open onClosed={() => setIsAddModalOpen(false)} onClick={e => e.stopPropagation()}>
+              <div slot="headline">Add to Collection</div>
+              <div slot="content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="modal-selected-preview" style={{ padding: '0 0 16px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
+                  {selected.map(s => (
+                    <div key={s.id} className="preview-chip">
+                      {s.poster ? <img src={`${IMG_BASE}${s.poster}`} alt={s.title} /> : <div style={{width:'24px', height:'24px', background:'var(--md-sys-color-surface)', borderRadius:'4px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px'}}>{s.type === 'tv' ? '📺' : '🎬'}</div>}
+                      <span>{s.title}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ marginTop: '8px' }}>
+                  <label className="form-label">Choose or create a franchise</label>
+                  <div className="franchise-list" style={{ marginTop: '8px' }}>
+                    {getUniqueFranchises().length === 0 ? (
+                      <p style={{fontSize:'13px', color:'var(--md-sys-color-outline)', padding:'4px 0'}}>No collections yet — create your first one below!</p>
+                    ) : (
+                      getUniqueFranchises().map(f => {
+                        const count = collection.filter(e => e.franchise === f).length;
+                        return (
+                          <div key={f} className={`franchise-option ${selectedFranchise === f ? 'selected' : ''}`} onClick={() => { setSelectedFranchise(f); setNewFranchiseName(''); }}>
+                            <span style={{flex: 1}}>{f}</span>
+                            <span style={{fontSize:'12px', opacity: 0.8}}>{count} title{count !== 1 ? 's' : ''}</span>
+                          </div>
+                        )
+                      })
+                    )}
                   </div>
-                ))}
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Choose or create a franchise</label>
-                <div className="franchise-list">
-                  {getUniqueFranchises().length === 0 ? (
-                    <p style={{fontSize:'13px', color:'var(--md-sys-color-outline)', padding:'4px 0'}}>No collections yet — create your first one below!</p>
-                  ) : (
-                    getUniqueFranchises().map(f => {
-                      const count = collection.filter(e => e.franchise === f).length;
-                      return (
-                        <button key={f} className={`franchise-option ${selectedFranchise === f ? 'selected' : ''}`} onClick={() => { setSelectedFranchise(f); setNewFranchiseName(''); }}>
-                          <span style={{flex: 1}}>{f}</span>
-                          <span style={{fontSize:'12px', opacity: 0.8}}>{count} title{count !== 1 ? 's' : ''}</span>
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-                <div className="new-franchise-wrap">
-                  <input
-                    type="text"
-                    className="franchise-input"
-                    placeholder="+ Create new container..."
-                    value={newFranchiseName}
-                    onChange={(e) => { setNewFranchiseName(e.target.value); setSelectedFranchise(''); }}
-                  />
+                  
+                  <div className="new-franchise-wrap" style={{ marginTop: '16px' }}>
+                    <md-outlined-text-field
+                      label="Create new container..."
+                      value={newFranchiseName}
+                      onInput={(e) => { setNewFranchiseName(e.target.value); setSelectedFranchise(''); }}
+                      style={{ width: '100%' }}
+                    >
+                      <md-icon slot="leading-icon">add</md-icon>
+                    </md-outlined-text-field>
+                  </div>
                 </div>
               </div>
-              <div className="modal-footer">
-                <button className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
-                <button className="btn-primary" disabled={(!selectedFranchise && !newFranchiseName.trim())} onClick={confirmAdd}>Add to Collection</button>
+              <div slot="actions">
+                <md-text-button onClick={() => setIsAddModalOpen(false)}>Cancel</md-text-button>
+                <md-filled-button disabled={(!selectedFranchise && !newFranchiseName.trim()) ? true : undefined} onClick={confirmAdd}>Add to Collection</md-filled-button>
               </div>
-            </motion.div>
+            </md-dialog>
           </div>
         )}
       </AnimatePresence>
@@ -522,20 +563,24 @@ export default function Home() {
       <AnimatePresence>
         {sidePanelItem && (
           <div className="side-panel-overlay open" onClick={(e) => { if(e.target.classList.contains('side-panel-overlay')) setSidePanelItem(null) }}>
-            <motion.div className="side-panel" variants={panelVar} initial="initial" animate="animate" exit="exit" onClick={e => e.stopPropagation()}>
-              <button className="panel-close" onClick={() => setSidePanelItem(null)}>✕</button>
-              <div id="side-panel-content">
+            <motion.div className="side-panel" variants={cardVar} initial="initial" animate="animate" exit="exit" onClick={e => e.stopPropagation()}>
+              <md-icon-button className="panel-close" onClick={() => setSidePanelItem(null)} style={{ background: 'var(--md-sys-color-surface-container-high)', border: 'none' }}>
+                <md-icon>close</md-icon>
+              </md-icon-button>
+              <div id="side-panel-content" style={{ padding: 0 }}>
                 {sidePanelItem.poster && <img className="panel-poster" src={sidePanelItem.poster} alt={sidePanelItem.title} />}
-                <div className="panel-title">{sidePanelItem.title}</div>
-                <div className="panel-meta">
-                  <span className="panel-tag">{sidePanelItem.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
-                  {sidePanelItem.year && <span>· {sidePanelItem.year}</span>}
-                  {sidePanelItem.added_date && <span>· Added {sidePanelItem.added_date}</span>}
+                <div style={{ padding: '24px' }}>
+                  <div className="panel-title">{sidePanelItem.title}</div>
+                  <div className="panel-meta" style={{ marginBottom: '16px' }}>
+                    <span className="panel-tag">{sidePanelItem.type === 'tv' ? '📺 Series' : '🎬 Movie'}</span>
+                    {sidePanelItem.year && <span>· {sidePanelItem.year}</span>}
+                    {sidePanelItem.added_date && <span>· Added {sidePanelItem.added_date}</span>}
+                  </div>
+                  <p className="panel-overview">{sidePanelItem.overview || 'No description available.'}</p>
+                  {sidePanelItem.franchises && sidePanelItem.franchises.length > 0 && (
+                    <div className="panel-franchise">In collection: {sidePanelItem.franchises.map(f => <strong key={f}>{f} </strong>)}</div>
+                  )}
                 </div>
-                <p className="panel-overview">{sidePanelItem.overview || 'No description available.'}</p>
-                {sidePanelItem.franchises && sidePanelItem.franchises.length > 0 && (
-                  <div className="panel-franchise">In collection: {sidePanelItem.franchises.map(f => <strong key={f}>{f} </strong>)}</div>
-                )}
               </div>
             </motion.div>
           </div>
@@ -547,13 +592,13 @@ export default function Home() {
           <div className="api-setup-banner" style={{ display: 'block' }}>
             <div className="api-setup-inner">
               <span className="api-icon">🔑</span>
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong>Set up your free TMDB API key to enable search</strong>
                 <p>Get a free key at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">themoviedb.org</a> — it's instant and free.</p>
               </div>
-              <div className="api-key-form">
-                <input type="text" placeholder="Paste your API key here..." value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} />
-                <button onClick={saveAPIKey}>Save</button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <md-outlined-text-field label="Paste your API key here..." value={apiKeyInput} onInput={e => setApiKeyInput(e.target.value)} />
+                <md-filled-button onClick={saveAPIKey} style={{ whiteSpace: 'nowrap' }}>Save</md-filled-button>
               </div>
             </div>
           </div>
