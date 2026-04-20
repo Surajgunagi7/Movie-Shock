@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MovieShock · Your Franchise Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+  <meta name="description" content="Track your watched movies and web series organized by franchise and collection." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== TOP NAV ===== -->
+  <nav class="topnav">
+    <div class="nav-logo">
+      <span class="logo-icon">🎬</span>
+      <span class="logo-text">Movie<span class="logo-accent">Shock</span></span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-search" onclick="switchView('search')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Discover
+      </button>
+      <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        My Collection
+      </button>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-icon" onclick="exportCSV()" title="Export CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <label class="btn-icon" title="Import CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <input type="file" accept=".csv" id="csv-import" onchange="importCSV(event)" hidden />
+      </label>
+    </div>
+  </nav>
+
+  <!-- ===== SEARCH VIEW ===== -->
+  <main id="view-search" class="view active">
+    <div class="hero-section">
+      <h1 class="hero-title">Discover & Track</h1>
+      <p class="hero-sub">Search movies and web series, add them to your franchise collection</p>
+
+      <!-- Type Toggle -->
+      <div class="type-toggle">
+        <button class="type-btn active" id="type-movie" onclick="setMediaType('movie')">🎬 Movies</button>
+        <button class="type-btn" id="type-tv" onclick="setMediaType('tv')">📺 Web Series</button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Search for a movie, series or franchise..."
+          oninput="handleSearch(this.value)"
+          autocomplete="off"
+        />
+        <div class="search-spinner" id="search-spinner"></div>
+        <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none">✕</button>
+      </div>
+    </div>
+
+    <!-- Results Area -->
+    <section class="results-section" id="results-section" style="display:none">
+      <div class="results-header">
+        <h2 class="results-title" id="results-title">Results</h2>
+        <div class="selected-bar" id="selected-bar" style="display:none">
+          <span id="selected-count">0 selected</span>
+          <button class="btn-primary" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add to Collection
+          </button>
+        </div>
+      </div>
+      <div class="results-grid" id="results-grid"></div>
+      <div class="no-results" id="no-results" style="display:none">
+        <span>🎬</span>
+        <p>No results found. Try a different title.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== DASHBOARD VIEW ===== -->
+  <main id="view-dashboard" class="view" style="display:none">
+    <div class="dashboard-header">
+      <div class="dash-title-row">
+        <h1 class="dash-title">My Collection</h1>
+        <span class="dash-stat" id="dash-total-count">0 titles</span>
+      </div>
+      <!-- Quick Search on Dashboard -->
+      <div class="search-wrapper dash-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input
+          type="text"
+          id="dash-search-input"
+          class="search-input"
+          placeholder="Quick filter by title or franchise..."
+          oninput="filterDashboard(this.value)"
+        />
+      </div>
+      <!-- Filter Pills -->
+      <div class="filter-row" id="filter-row">
+        <button class="pill active" onclick="filterByType('all', this)">All</button>
+        <button class="pill" onclick="filterByType('movie', this)">🎬 Movies</button>
+        <button class="pill" onclick="filterByType('tv', this)">📺 Series</button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display:none">
+      <div class="empty-icon">🎞️</div>
+      <h3>Your collection is empty</h3>
+      <p>Search for a movie or series and add it here.</p>
+      <button class="btn-primary" onclick="switchView('search')">Start Discovering</button>
+    </div>
+
+    <!-- Collections Grid -->
+    <div class="collections-container" id="collections-container"></div>
+  </main>
+
+  <!-- ===== ADD TO COLLECTION MODAL ===== -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+    <div class="modal glass-card" id="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add to Collection</h3>
+        <button class="modal-close" onclick="closeAddModal()">✕</button>
+      </div>
+
+      <div class="modal-selected-preview" id="modal-preview"></div>
+
+      <div class="modal-body">
+        <label class="form-label">Choose or create a franchise / collection</label>
+
+        <!-- Existing Franchises -->
+        <div class="franchise-list" id="franchise-list"></div>
+
+        <!-- New Franchise Input -->
+        <div class="new-franchise-wrap">
+          <input
+            type="text"
+            id="new-franchise-input"
+            class="franchise-input"
+            placeholder="+ Create new collection..."
+            oninput="handleNewFranchiseInput(this.value)"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeAddModal()">Cancel</button>
+        <button class="btn-primary" id="modal-confirm" onclick="confirmAdd()" disabled>Add to Collection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== API KEY SETUP BANNER ===== -->
+  <div class="api-setup-banner" id="api-setup-banner" style="display:none">
+    <div class="api-setup-inner">
+      <span class="api-icon">🔑</span>
+      <div>
+        <strong>Set up your free TMDB API key to enable search</strong>
+        <p>Get a free key at <a href="https://www.themoviedb.org/settings/api" target="_blank">themoviedb.org</a> — it's instant and free.</p>
+      </div>
+      <div class="api-key-form">
+        <input type="text" id="api-key-input" placeholder="Paste your API key here..." />
+        <button onclick="saveAPIKey()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== MOVIE DETAIL SIDE PANEL ===== -->
+  <div class="side-panel-overlay" id="side-panel-overlay" onclick="closeSidePanel(event)">
+    <div class="side-panel glass-card" id="side-panel">
+      <button class="panel-close" onclick="closeSidePanelDirect()">✕</button>
+      <div id="side-panel-content"></div>
+    </div>
+  </div>
+
+  <script src="app.js?v=2"></script>
+</body>
+</html>
