@@ -4,8 +4,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
+    console.log(`[API] GET /api/movies - Initiating database connection`);
     await dbConnect();
     const movies = await Movie.find({});
+    console.log(`[API] GET /api/movies - Successfully fetched ${movies.length} items`);
     return NextResponse.json(movies);
   } catch (error) {
     console.error('Failed to get movies', error);
@@ -21,16 +23,20 @@ export async function POST(req) {
     
     await dbConnect();
     const entries = await req.json();
-    
+    console.log(`[API] POST /api/movies - Incoming payload with ${entries.length} items`);
+
     if (!Array.isArray(entries)) {
+        console.warn(`[API] POST /api/movies - Rejected: Payload is not an array`);
         return NextResponse.json({ error: 'Expected array' }, { status: 400 });
     }
 
     // Clear existing and rewrite (mirroring exactly what the CSV saving did)
     // Though it's not the most efficient for MongoDB, it preserves the exact structure the user liked.
+    console.log(`[API] POST /api/movies - Wiping old collection and inserting new data...`);
     await Movie.deleteMany({});
     await Movie.insertMany(entries);
     
+    console.log(`[API] POST /api/movies - Successfully saved ${entries.length} items`);
     return NextResponse.json({ ok: true, count: entries.length });
   } catch (error) {
     console.error('Failed to save movies', error);
