@@ -82,7 +82,8 @@ export default function Home() {
   };
 
   const tmdbGet = async (path, params = {}) => {
-    const key = apiKey || localStorage.getItem(STORAGE_API_KEY) || '273fc15b4bd675aed3c5fc53ecfc945c';
+    const envKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+    const key = envKey || apiKey || localStorage.getItem(STORAGE_API_KEY) || '273fc15b4bd675aed3c5fc53ecfc945c';
     if (!key) {
       setShowApiBanner(true);
       throw new Error('No API key');
