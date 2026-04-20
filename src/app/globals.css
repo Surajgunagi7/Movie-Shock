@@ -306,7 +306,7 @@ a:hover { text-decoration: underline; }
 /* ===== RESULTS GRID ===== */
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
 
@@ -550,7 +550,7 @@ a:hover { text-decoration: underline; }
 
 .franchise-scroll {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
 
@@ -798,3 +798,38 @@ a:hover { text-decoration: underline; }
 .empty-icon { font-size: 64px; margin-bottom: 16px; }
 .empty-state h3 { font-size: 24px; margin-bottom: 8px; font-weight: 400; }
 .empty-state p { color: var(--md-sys-color-outline); margin-bottom: 24px; }
+
+/* ===== MOBILE & MD3 OPTIMIZATIONS ===== */
+@media (max-width: 600px) {
+  .hero-title { font-size: 28px; }
+  .view { padding-top: 16px; padding-bottom: 96px; }
+  
+  /* Convert TopNav to Bottom Navigation Array */
+  .topnav {
+    top: auto;
+    bottom: 0;
+    height: 72px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    padding: 0 12px;
+  }
+  .nav-logo { display: none; }
+  .nav-tabs { width: 100%; justify-content: space-around; }
+  .nav-tab { 
+    flex-direction: column; 
+    gap: 4px; 
+    font-size: 11px; 
+    padding: 8px 24px;
+    border-radius: var(--md-shape-sm);
+  }
+  
+  /* Modal becomes Bottom Sheet */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: 100%;
+    margin-top: auto;
+    border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0 !important;
+    padding-bottom: 24px;
+  }
+  
+  .side-panel { max-width: 100%; }
+}

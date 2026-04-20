@@ -9,11 +9,13 @@ const IMG_BASE = 'https://image.tmdb.org/t/p/w342';
 const IMG_ORIG = 'https://image.tmdb.org/t/p/w500';
 const STORAGE_API_KEY = 'movieshock_apikey';
 
-// Animation variants
+// Authentic Material 3 Motion Curves (Emphasized Decelerate)
+const md3Ease = [0.05, 0.7, 0.1, 1.0];
+
 const pageVar = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0, 0, 1] } },
-  exit: { opacity: 0, scale: 0.98, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: md3Ease } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
 };
 
 const staggerVar = {
@@ -22,21 +24,21 @@ const staggerVar = {
 };
 
 const cardVar = {
-  initial: { opacity: 0, scale: 0.9, y: 10 },
-  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0, 0, 1] } },
-  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
+  initial: { opacity: 0, scale: 0.95, y: 20 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: md3Ease } },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
 
 const modalVar = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1, transition: { type: 'spring', damping: 25, stiffness: 300 } },
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
+  initial: { opacity: 0, y: 50 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: md3Ease } },
+  exit: { opacity: 0, y: 50, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
 };
 
 const panelVar = {
-  initial: { x: '100%' },
-  animate: { x: 0, transition: { type: 'spring', damping: 25, stiffness: 200 } },
-  exit: { x: '100%', transition: { type: 'tween', ease: 'easeInOut', duration: 0.2 } }
+  initial: { x: '100%', opacity: 0 },
+  animate: { x: 0, opacity: 1, transition: { duration: 0.4, ease: md3Ease } },
+  exit: { x: '100%', opacity: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }
 };
 
 export default function Home() {
